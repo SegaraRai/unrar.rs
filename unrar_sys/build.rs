@@ -57,7 +57,8 @@ fn main() {
         "dll",
         "qopen",
     ].iter().map(|&s| format!("vendor/unrar/{s}.cpp")).collect();
-    cc::Build::new()
+    let mut build = cc::Build::new();
+    build
         .cpp(true) // Switch to C++ library compilation.
         .opt_level(2)
         .std("c++14")
@@ -82,6 +83,11 @@ fn main() {
         .define("_LARGEFILE_SOURCE", None)
         .define("RAR_SMP", None)
         .define("RARDLL", None)
-        .files(&files)
-        .compile("libunrar.a");
+        .files(&files);
+
+    if cfg!(all(windows, target_arch = "x86_64")) {
+        build.flag_if_supported("-maes").flag_if_supported("-mssse3");
+    }
+
+    build.compile("libunrar.a");
 }
